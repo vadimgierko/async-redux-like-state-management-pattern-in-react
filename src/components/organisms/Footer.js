@@ -3,8 +3,9 @@ export default function Footer() {
 		<footer style={{ textAlign: "center", color: "grey" }}>
 			<hr />
 			<h4>
-				Todo App created with create-react-app with Redux-like state management
-				pattern (React Context API + useReducer hook) implemented created by{" "}
+				Simple single page Todo App integrated with Firebase realtime database,
+				written in React with async Context API & useReducer Redux-like state
+				management pattern implemented created by{" "}
 				<a
 					href="https://github.com/vadimgierko"
 					target="_blank"
@@ -17,7 +18,7 @@ export default function Footer() {
 			<p>
 				Click here to see the{" "}
 				<a
-					href="https://github.com/vadimgierko/redux-like-state-management-pattern#how-to-applyuse-redux-like-state-management-pattern-using-react-context-api--usereducer"
+					href="https://github.com/vadimgierko/async-redux-like-state-management-pattern-in-react#readme"
 					target="_blank"
 					rel="noreferrer"
 				>
@@ -28,7 +29,7 @@ export default function Footer() {
 			<p>
 				Click here to{" "}
 				<a
-					href="https://codesandbox.io/s/redux-like-state-management-pattern-in-react-118eg"
+					href="https://codesandbox.io/s/async-react-context-usereducer-redux-like-state-management-pattern-nfiffe"
 					target="_blank"
 					rel="noreferrer"
 				>
@@ -39,7 +40,7 @@ export default function Footer() {
 			<p>
 				Click here to see the{" "}
 				<a
-					href="https://github.com/vadimgierko/redux-like-state-management-pattern"
+					href="https://github.com/vadimgierko/async-redux-like-state-management-pattern-in-react"
 					target="_blank"
 					rel="noreferrer"
 				>
