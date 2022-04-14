@@ -1,13 +1,19 @@
-import uniqid from "uniqid";
+import generateFirebaseKeyFor from "../firebase-crud/generateFirebaseKeyFor";
+import addToDatabase from "../firebase-crud/addToDatabase";
 
 export default function addTodo(todo, dispatch) {
-	const id = uniqid();
+	// create a Firebase database key for a new todo:
+	const id = generateFirebaseKeyFor("todos");
 
-	return dispatch({
-		type: "add-todo",
-		payload: {
-			id: id,
-			todo: todo,
-		},
-	});
+	if (todo && id) {
+		addToDatabase("todos", id, todo).then(() => {
+			dispatch({
+				type: "add-todo",
+				payload: {
+					id: id,
+					todo: todo,
+				},
+			});
+		});
+	}
 }

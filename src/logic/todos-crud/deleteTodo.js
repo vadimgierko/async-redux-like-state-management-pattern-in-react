@@ -1,8 +1,12 @@
+import deleteFromDatabase from "../firebase-crud/deleteFromDatabase";
+
 export default function deleteTodo(id, dispatch) {
-	return dispatch({
-		type: "delete-todo",
-		payload: {
-			id: id,
-		},
+	return deleteFromDatabase("todos", id).then(() => {
+		return dispatch({
+			type: "delete-todo",
+			payload: {
+				id: id,
+			},
+		});
 	});
 }
