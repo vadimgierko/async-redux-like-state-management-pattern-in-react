@@ -1,8 +1,14 @@
 import { database } from "../../firebaseConfig";
 import { onValue, ref } from "firebase/database";
 
+// The function below is written to be reusable:
+// itemCategoryNameInThePlural argument represents the type of item, ex. "todos", "items" etc.
+// It's needed for creating a database reference.
+
+// fetch all items (todos in this case) from database (once, when app is mounted)
+// and add them to the store using dispatch:
 export default function fetchFromDatabase(
-	itemCategoryNameInThePlural,
+	itemCategoryNameInThePlural, // "todos"
 	dispatch
 ) {
 	return onValue(

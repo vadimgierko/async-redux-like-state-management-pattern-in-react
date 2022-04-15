@@ -6,8 +6,8 @@ export default function addTodo(todo, dispatch) {
 	const id = generateFirebaseKeyFor("todos");
 
 	if (todo && id) {
-		addToDatabase("todos", id, todo).then(() => {
-			dispatch({
+		return addToDatabase("todos", id, todo).then(() => {
+			return dispatch({
 				type: "add-todo",
 				payload: {
 					id: id,
@@ -15,5 +15,9 @@ export default function addTodo(todo, dispatch) {
 				},
 			});
 		});
+	} else {
+		alert(
+			"Error occured: there is no todo data passed or the unique key wasn't generated... Try again!"
+		);
 	}
 }

@@ -11,17 +11,18 @@ The app we've build in previous tutorial (& what be a foundation for the extende
 - an app CRUD logic functions dispatching the changes in state via reducer,
 - basic UI components.
 
-Those version of the app didn't handle any async functions. There was no database connection & no fetching data. But in a real-world applications we would deal with async JavaScript, for example when fetching or posting data from database.
+Those version of the app didn't handle any async functions. There was no database connection & no fetching data. But in a real-world applications we would deal with async JavaScript, for example when fetching or posting data from/to database.
 
 ## What we will build in this tutorial
 
-So in this tutorial we will extend our previous app features by connecting it to Firebase Realtime Database to store our todos in a cloud database.
+So in this tutorial we will extend our previous app features by connecting the app to the Firebase Realtime Database to store our todos. And of course, to do that, we will connect Firebase API with our previously built Redux-like store management pattern.
 
-## What we will will learn in this tutorial
+## What we will learn in this tutorial
 
 In this tutorial we will learn:
 
-- that Redux-like state management pattern works perfectly with async JS and we don't need to use any external libraries, like Thunk in Redux,
+- how React Context & useReducer Redux-like state management pattern works with async JS (Firebase API)
+- that our Redux-like state management pattern needs no external libraries, like Thunk in Redux,
 - how to connect a Redux-like state management pattern to the database & handle all of CRUD functions without any external libraries or packages (except firebase npm package).
 
 ## Get started!
@@ -41,7 +42,8 @@ Ok, so we have an app from the previous tutorial set & now we will create a new 
 - create a new Firebase project according to Firebase guide/ docs,
 - create a Realtime database in the project (choose the test mode),
 - register your app,
-- copy Firebase SDK & paste it into firebaseConfig.js file (create the file) in src folder & then import { getDatabase } from "firebase/database" & export const database = getDatabase(app) (copy the code snippet below, but change your firebaseConfig object according to your SDK):
+- copy Firebase SDK & paste it into src/firebaseConfig.js file (create the file)
+- import { getDatabase } from "firebase/database" & export const database = getDatabase(app) (copy the code snippet below, but change your firebaseConfig object according to your SDK):
 
 ```
 // src/firebaseConfig.js file:
@@ -70,6 +72,8 @@ const app = initializeApp(firebaseConfig);
 export const database = getDatabase(app);
 ```
 
+If you will have any problems with creating Firebase project or connecting it to your app, see Firebase docs.
+
 ### Create basic CRUD Firebase functions
 
 In our app we already have a folder named _logic_ & _todos-crud_ folder inside it. In that folder we have 3 files for addTodo, deleteTodo & updateTodo functions, which manage changes in our global app store.
@@ -79,7 +83,27 @@ So now we need to define same functions for adding, deleting & updating our data
 - when app mounts, it fetches todos from database & then put it to the global app store,
 - when we add/delete/update todos, we first add/delete/update todos in database & then, if it succeed, we dispatch changes in app store (what means, that we do not fetch todos from database again).
 
-So complete steps below:
+Before we will create Firebase CRUD functions, I want to show you, how our database structure will look:
+
+```
+"todos": {
+  "$uniqueFirebaseKeyForTodo": {
+    "todo": "our todo's content"
+  }
+}
+```
+
+You can see, that our store looks similar to database structure:
+
+```
+todos: {
+  Tgfd87r990w-iekdkwew98: {
+     todo: "our todo's content",
+  },
+}
+```
+
+Now, when we understand how our database is structured, complete steps below:
 
 - in _logic_ folder create a _firebase-crud_ folder,
 - inside _firebase-crud_ folder create 4 files:
@@ -89,22 +113,30 @@ So complete steps below:
   - generateFirebaseKeyFor.js
 - copy the code from code snippets mentioned below & paste it to the appropriate files:
 
+(check explanation comments in code snippets below to understand the logic)
+
 ```
 // addToDatabase.js file
 
 import { database } from "../../firebaseConfig";
 import { ref, set } from "firebase/database";
 
-// props are structured in a firebase reference order
+// The function below is written to be reusable:
+// itemCategoryNameInThePlural argument represents the type of item, ex. "todos", "items" etc.
+// It's needed for creating a database reference.
+// The usual Firebase function would look like the commented function in the bottom of this file.
+
 export default function addToDatabase(
-  itemCategoryNameInThePlural,
-  itemKey,
-  item
+  itemCategoryNameInThePlural, // "todos"
+  itemKey, // generated Firebase unique key
+  item // that's our todo
 ) {
   return set(ref(database, itemCategoryNameInThePlural + "/" + itemKey), {
     todo: item
   })
     .then(() => {
+      // when todo is added to database, log success message:
+      // (that's optional)
       console.log(
         itemCategoryNameInThePlural +
           " item was successfully added to the database under the key:",
@@ -113,6 +145,28 @@ export default function addToDatabase(
     })
     .catch((error) => alert(error.message));
 }
+
+// The function above is written to be reusable
+// so it can be tricky to understand it on the first glance.
+// If you want to simplify the function above (and maybe understand it better)
+// you can use the code below:
+
+/*
+export default function addToDatabase(itemKey, item) {
+  return set(ref(database, "todos/" + itemKey), {
+    todo: item
+  })
+    .then(() => {
+      // when todo is added to database, log success message:
+      // (that's optional)
+      console.log(
+        "todos item was successfully added to the database under the key:",
+        itemKey
+      );
+    })
+    .catch((error) => alert(error.message));
+}
+*/
 ```
 
 ```
@@ -121,21 +175,48 @@ export default function addToDatabase(
 import { database } from "../../firebaseConfig.js";
 import { ref, remove } from "firebase/database";
 
+// The function below is written to be reusable:
+// itemCategoryNameInThePlural argument represents the type of item, ex. "todos", "items" etc.
+// It's needed for creating a database reference.
+// The usual Firebase function would look like the commented function in the bottom of this file.
+
 export default function deleteFromDatabase(
-  itemCategoryNameInThePlural,
-  itemKey
+  itemCategoryNameInThePlural, // "todos"
+  itemKey // Firebase unique key
 ) {
-  return remove(
-    ref(database, itemCategoryNameInThePlural + "/" + itemKey)
-  ).then(() =>
-    console.log(
-      itemCategoryNameInThePlural + " item with the key,",
-      itemKey,
-      " was successfully deleted from database."
+  return remove(ref(database, itemCategoryNameInThePlural + "/" + itemKey))
+    .then(() =>
+      // when todo is deleted from database, log success message:
+      // (that's optional)
+      console.log(
+        itemCategoryNameInThePlural + " item with the key,",
+        itemKey,
+        " was successfully deleted from database."
+      )
     )
-  );
+    .catch((error) => alert(error.message));
 }
 
+// The function above is written to be reusable,
+// so it can be tricky to understand it on the first glance.
+// If you want to simplify the function above (and maybe understand it better)
+// you can use the code below:
+
+/*
+export default function deleteFromDatabase(itemKey) {
+  return remove(ref(database, "todos/" + itemKey))
+    .then(() =>
+      // when todo is deleted from database, log success message:
+      // (that's optional)
+      console.log(
+        "todo item with the key",
+        itemKey,
+        "was successfully deleted from database."
+      )
+    )
+    .catch((error) => alert(error.message));
+}
+*/
 ```
 
 ```
@@ -144,8 +225,14 @@ export default function deleteFromDatabase(
 import { database } from "../../firebaseConfig";
 import { onValue, ref } from "firebase/database";
 
+// The function below is written to be reusable:
+// itemCategoryNameInThePlural argument represents the type of item, ex. "todos", "items" etc.
+// It's needed for creating a database reference.
+
+// fetch all items (todos in this case) from database (once, when app is mounted)
+// and add them to the store using dispatch:
 export default function fetchFromDatabase(
-  itemCategoryNameInThePlural,
+  itemCategoryNameInThePlural, // "todos"
   dispatch
 ) {
   return onValue(
@@ -182,7 +269,6 @@ export default function fetchFromDatabase(
     }
   );
 }
-
 ```
 
 ```
@@ -191,6 +277,11 @@ export default function fetchFromDatabase(
 import { database } from "../../firebaseConfig";
 import { ref, push, child } from "firebase/database";
 
+// The function below is written to be reusable:
+// itemCategoryNameInThePlural argument represents the type of item, ex. "todos", "items" etc.
+// It's needed for creating a database reference.
+
+// generate Firebase unique key for the item:
 export default function generateFirebaseKeyFor(itemCategoryNameInThePlural) {
   const firebaseKey = push(child(ref(database), itemCategoryNameInThePlural))
     .key;
@@ -199,7 +290,7 @@ export default function generateFirebaseKeyFor(itemCategoryNameInThePlural) {
 }
 ```
 
-### Modify CRUD functions in _todos-crud_ folder
+### Modify todos CRUD functions in logic/todos-crud
 
 Now we need to update our CRUD functions in _todos-crud_ folder. In every file we need to run firebase function first & then dispatch changes in the app. So the updated code in those files will be:
 
@@ -261,7 +352,7 @@ export default function updateTodo(id, updatedTodo, dispatch) {
 }
 ```
 
-### Modify Store to fetch todos when app mounts
+### Last step: Modify Store to fetch todos when app mounts
 
 ```
 // Store.js file:
@@ -293,5 +384,11 @@ export function StoreProvider({ children }) {
   );
 }
 ```
+
+## Summary
+
+Congratulations! Our app is complete!
+
+Remember, that the pattern we've learned in this and previous tutorial, is reusable, so you can use it in every app (like me ;-)
 
 Happy Coding!
